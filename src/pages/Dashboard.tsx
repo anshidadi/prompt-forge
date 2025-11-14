@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, Copy, Share2, Trash2, LogOut } from "lucide-react";
+import { Sparkles, Copy, Share2, Trash2, LogOut, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { User } from "@supabase/supabase-js";
@@ -25,7 +25,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Check authentication
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         navigate("/auth");
@@ -88,7 +87,6 @@ const Dashboard = () => {
 
       setGeneratedPrompt(data.generatedPrompt);
       
-      // Save to database
       await supabase.from("prompts").insert({
         user_id: user?.id,
         user_idea: userIdea,
@@ -139,56 +137,88 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              PromptForge
-            </span>
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-mesh opacity-30" />
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] animate-float" />
+      
+      <div className="relative z-10">
+        {/* Header */}
+        <header className="border-b border-border/50 backdrop-blur-sm bg-background/80 sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Sparkles className="w-8 h-8 text-primary animate-pulse-glow" />
+                <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full" />
+              </div>
+              <span className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                PromptForge
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                Welcome, <span className="text-foreground font-medium">{userName}</span>
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleLogout}
+                className="gap-2 hover:scale-105 transition-all duration-300"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">Welcome, {userName}!</span>
-            <Button variant="ghost" size="icon" onClick={handleLogout}>
-              <LogOut className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left: Generate Section */}
-          <div className="space-y-6">
-            <Card className="shadow-card">
+        {/* Main Content */}
+        <main className="container mx-auto px-4 py-12">
+          <div className="max-w-4xl mx-auto space-y-8">
+            {/* Welcome Section */}
+            <div className="text-center space-y-2 animate-fade-in-up">
+              <h1 className="text-4xl font-bold">
+                Hi, {userName}! 👋
+              </h1>
+              <p className="text-muted-foreground">
+                What would you like to create today?
+              </p>
+            </div>
+
+            {/* Generator Section */}
+            <Card className="backdrop-blur-sm bg-card/80 border-border/50 shadow-lg hover:shadow-xl transition-all duration-300 animate-scale-in">
               <CardHeader>
-                <CardTitle>Generate Your Prompt</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  Generate Your Prompt
+                </CardTitle>
                 <CardDescription>
-                  Enter your idea and let AI create a detailed prompt for you
+                  Describe your idea and we'll create a perfect prompt for you
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Your Idea</label>
                   <Textarea
-                    placeholder="Example: Create a marketing campaign for eco-friendly products..."
+                    placeholder="Enter your idea here... (e.g., 'A mobile app for tracking daily habits')"
                     value={userIdea}
                     onChange={(e) => setUserIdea(e.target.value)}
-                    className="min-h-[150px] resize-none"
+                    rows={4}
+                    className="resize-none transition-all duration-300 focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   />
                 </div>
                 <Button
                   onClick={handleGeneratePrompt}
-                  disabled={loading}
-                  className="w-full gap-2"
+                  disabled={loading || !userIdea.trim()}
+                  className="w-full shadow-glow hover:shadow-glow/70 hover:scale-[1.02] transition-all duration-300 group"
                 >
                   {loading ? (
-                    "Generating..."
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
                   ) : (
                     <>
-                      <Sparkles className="w-4 h-4" />
+                      <Sparkles className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
                       Generate Prompt
                     </>
                   )}
@@ -196,29 +226,31 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
+            {/* Generated Prompt Display */}
             {generatedPrompt && (
-              <Card className="shadow-glow border-primary/20 bg-gradient-card animate-scale-in">
+              <Card className="backdrop-blur-sm bg-gradient-card border border-primary/20 shadow-lg shadow-primary/5 animate-fade-in-up">
                 <CardHeader>
-                  <CardTitle>Generated Prompt</CardTitle>
-                  <CardDescription>Your enhanced AI-ready prompt</CardDescription>
+                  <CardTitle className="text-primary">Your Generated Prompt</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="p-4 bg-muted rounded-lg text-sm whitespace-pre-wrap">
-                    {generatedPrompt}
+                  <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                    <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+                      {generatedPrompt}
+                    </p>
                   </div>
                   <div className="flex gap-2">
                     <Button
-                      variant="outline"
-                      className="flex-1 gap-2"
                       onClick={() => handleCopy(generatedPrompt)}
+                      variant="outline"
+                      className="flex-1 gap-2 hover:bg-primary/5 hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
                     >
                       <Copy className="w-4 h-4" />
                       Copy
                     </Button>
                     <Button
-                      variant="outline"
-                      className="flex-1 gap-2"
                       onClick={() => handleShare(generatedPrompt)}
+                      variant="outline"
+                      className="flex-1 gap-2 hover:bg-secondary/5 hover:border-secondary/50 hover:scale-[1.02] transition-all duration-300"
                     >
                       <Share2 className="w-4 h-4" />
                       Share
@@ -227,69 +259,77 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             )}
-          </div>
 
-          {/* Right: Recent Prompts */}
-          <div className="space-y-6">
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle>Recent Prompts</CardTitle>
-                <CardDescription>Your previously generated prompts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {recentPrompts.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    No prompts yet. Generate your first one!
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {recentPrompts.map((prompt) => (
-                      <Card key={prompt.id} className="bg-gradient-card border-border/50">
-                        <CardContent className="p-4 space-y-3">
+            {/* Recent Prompts */}
+            {recentPrompts.length > 0 && (
+              <div className="space-y-4 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                <h2 className="text-2xl font-semibold">Recent Prompts</h2>
+                <div className="space-y-3">
+                  {recentPrompts.map((prompt, index) => (
+                    <Card
+                      key={prompt.id}
+                      className="backdrop-blur-sm bg-card/50 border-border/50 hover:border-primary/30 hover:shadow-md transition-all duration-300 hover:-translate-y-1 group animate-slide-in-right"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <CardContent className="pt-6">
+                        <div className="space-y-3">
                           <div>
-                            <p className="text-xs text-muted-foreground mb-1">Idea:</p>
-                            <p className="text-sm font-medium line-clamp-2">
-                              {prompt.user_idea}
+                            <p className="text-sm text-muted-foreground mb-1">Your Idea:</p>
+                            <p className="text-sm font-medium line-clamp-2">{prompt.user_idea}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Generated Prompt:</p>
+                            <p className="text-sm line-clamp-3 text-muted-foreground">
+                              {prompt.generated_prompt}
                             </p>
                           </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground mb-1">Prompt:</p>
-                            <p className="text-sm line-clamp-3">{prompt.generated_prompt}</p>
-                          </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 pt-2">
                             <Button
-                              size="sm"
-                              variant="ghost"
                               onClick={() => handleCopy(prompt.generated_prompt)}
+                              variant="ghost"
+                              size="sm"
+                              className="flex-1 gap-2 hover:bg-primary/10 hover:text-primary transition-all duration-300"
                             >
                               <Copy className="w-3 h-3" />
+                              Copy
                             </Button>
                             <Button
-                              size="sm"
-                              variant="ghost"
                               onClick={() => handleShare(prompt.generated_prompt)}
+                              variant="ghost"
+                              size="sm"
+                              className="flex-1 gap-2 hover:bg-secondary/10 hover:text-secondary transition-all duration-300"
                             >
                               <Share2 className="w-3 h-3" />
+                              Share
                             </Button>
                             <Button
-                              size="sm"
-                              variant="ghost"
                               onClick={() => handleDelete(prompt.id)}
-                              className="ml-auto text-destructive"
+                              variant="ghost"
+                              size="sm"
+                              className="gap-2 hover:bg-destructive/10 hover:text-destructive transition-all duration-300"
                             >
                               <Trash2 className="w-3 h-3" />
                             </Button>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      </main>
+        </main>
+
+        {/* Footer */}
+        <footer className="border-t border-border/50 mt-20 backdrop-blur-sm bg-background/80">
+          <div className="container mx-auto px-4 py-8 text-center">
+            <p className="text-muted-foreground">
+              © {new Date().getFullYear()} PromptForge. All rights reserved.
+            </p>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 };
