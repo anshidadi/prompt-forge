@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -156,6 +156,11 @@ const Dashboard = () => {
               </span>
             </div>
             <div className="flex items-center gap-4">
+              <Link to="/about">
+                <Button variant="ghost" size="sm" className="hover:scale-105 transition-transform">
+                  About
+                </Button>
+              </Link>
               <span className="text-sm text-muted-foreground hidden sm:inline">
                 Welcome, <span className="text-foreground font-medium">{userName}</span>
               </span>
