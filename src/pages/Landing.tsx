@@ -22,9 +22,14 @@ const Landing = () => {
               PromptForge
             </span>
           </div>
-          <Link to="/auth">
-            <Button variant="outline" className="hover:scale-105 transition-transform duration-300">Sign In</Button>
-          </Link>
+          <div className="flex gap-3">
+            <Link to="/about">
+              <Button variant="ghost" className="hover:scale-105 transition-transform duration-300">About</Button>
+            </Link>
+            <Link to="/auth">
+              <Button variant="outline" className="hover:scale-105 transition-transform duration-300">Sign In</Button>
+            </Link>
+          </div>
         </header>
 
         {/* Hero Section */}
